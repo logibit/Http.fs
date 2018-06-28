@@ -133,14 +133,21 @@ module SSE =
     read: Job<Streamer * Event>
   }
 
+  let ensureString =
+    function
+    | null -> ""
+    | s -> s
+
   let streamEvents streamer =
     let rec inner s =
       streamer
-      >>- interpret s
+      // >>- (fun msg -> printfn "In: %s" msg; msg)
+      >>- (ensureString >> interpret s)
       >>= function (s, eo) ->
             match eo with
             | Some e ->
+              // printfn "Out: %A" e
               Job.result ( { read = inner s }, e)
             | None ->
               inner s
-    inner initialState
+    { read = inner initialState }
